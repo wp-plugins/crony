@@ -1,12 +1,12 @@
 === Crony Cronjob Manager ===
 Contributors: sc0ttkclark
 Donate link: http://www.scottkclark.com/
-Tags: exports, reports, reporting, exporting, csv, tab, xml, json
+Tags: cron, wp_cron, cronjob, cron job, automatic
 Requires at least: 2.9
 Tested up to: 3.0
 Stable tag: 0.1
 
-THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP using wp_cron() hooks
+THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
 == Description ==
 
@@ -14,9 +14,9 @@ THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs i
 
 **OFFICIAL SUPPORT** - Crony Cronjob Manager - Support Forums: http://www.scottkclark.com/forums/crony-cronjob-manager/
 
-Create and Manage Cronjobs in WP using wp_cron() hooks
+Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
-All you do is install the plugin, schedule your functions at specific intervals, and live your life!
+All you do is install the plugin, schedule your Scripts / Functions / PHP code to run at a specific interval, and live your life!
 
 == Frequently Asked Questions ==
 
