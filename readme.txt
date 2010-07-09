@@ -22,7 +22,7 @@ All you do is install the plugin, schedule your Scripts / Functions / PHP code t
 
 **What does wp_cron() do?**
 
-As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() function scheduled ever 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background.
+As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() function scheduled ever 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background. The Cronjob (or Cron Job) sends a request to run cron through HTTP request that doesn't halt page loading for the visitor.
 
 **How is wp_cron() different from Server configured Cronjobs?**
 
