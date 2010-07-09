@@ -1,4 +1,4 @@
-=== Crony ===
+=== Crony Cronjob Manager ===
 Contributors: sc0ttkclark
 Donate link: http://www.scottkclark.com/
 Tags: exports, reports, reporting, exporting, csv, tab, xml, json
