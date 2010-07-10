@@ -73,4 +73,4 @@ Scott Kingsley Clark from SKC Development -- Scott specializes in WordPress and 
 == Roadmap ==
 
 = 0.2 =
-* Still deciding
+* Test a Job by running the script via iframe
