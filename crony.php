@@ -177,7 +177,7 @@ function crony_schedule_input ($column,$attributes,$obj)
     foreach($schedules as $id=>$schedule)
     {
 ?>
-    <option value="<?php echo $id; ?>"<?php echo ($obj->data[$column]==$id?' SELECTED':''); ?>><?php echo $schedule['display']; ?></option>
+    <option value="<?php echo $id; ?>"<?php echo ($obj->row[$column]==$id?' SELECTED':''); ?>><?php echo $schedule['display']; ?></option>
 <?php
     }
 ?>
@@ -186,7 +186,7 @@ function crony_schedule_input ($column,$attributes,$obj)
 }
 function crony_start_input ($column,$attributes,$obj)
 {
-    $obj->data[$column] = empty($obj->data[$column]) ? date("Y-m-d H:i:s") : $obj->data[$column];
+    $obj->row[$column] = empty($obj->row[$column]) ? date("Y-m-d H:i:s") : $obj->row[$column];
 ?>
 <script type="text/javascript" src="<?php echo CRONY_URL; ?>/assets/date_input.js"></script>
 <link type="text/css" rel="stylesheet" href="<?php echo CRONY_URL; ?>/assets/date_input.css" />
@@ -195,7 +195,7 @@ jQuery(function() {
     jQuery(".wp_admin_ui input.date").date_input();
 });
 </script>
-<input type="text" name="<?php echo $column; ?>" value="<?php echo $obj->data[$column]; ?>" class="regular-text date" />
+<input type="text" name="<?php echo $column; ?>" value="<?php echo $obj->row[$column]; ?>" class="regular-text date" />
 <?php
 }
 function crony_about ()
