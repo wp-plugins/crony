@@ -815,7 +815,7 @@ class WP_Admin_UI
             $this->message('<strong>Success!</strong> '.$this->item.' '.$action.' successfully.');
         }
         else
-            $this->error('<strong>Error</strong> '.$this->item.' has not been '.$action.'.');
+            $this->error('<strong>Error:</strong> '.$this->item.' has not been '.$action.'.');
         $this->do_hook('post_save',$this->insert_id,$data,$create);
     }
     function export ()
