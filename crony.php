@@ -3,14 +3,14 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://www.scottkclark.com/
 Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.1.1
+Version: 0.1.2
 Author: Scott Kingsley Clark
 Author URI: http://www.scottkclark.com/
 */
 
 global $wpdb;
 define('CRONY_TBL',$wpdb->prefix.'crony_');
-define('CRONY_VERSION','011');
+define('CRONY_VERSION','012');
 define('CRONY_URL',WP_PLUGIN_URL.'/crony');
 define('CRONY_DIR',WP_PLUGIN_DIR.'/crony');
 
@@ -78,6 +78,7 @@ function crony_menu ()
         $min_cap = 'crony_full_access';
     add_menu_page('Cronjobs', 'Cronjobs', $has_full_access ? 'read' : $min_cap, 'crony', null, CRONY_URL.'/assets/icons/16.png');
     add_submenu_page('crony', 'Manage Cronjobs', 'Manage Cronjobs', $has_full_access ? 'read' : 'crony_manage', 'crony', 'crony_manage');
+    //add_submenu_page('crony', 'View Logs', 'View Logs', $has_full_access ? 'read' : 'crony_manage', 'crony-logs', 'crony_logs');
     //add_submenu_page('crony', 'Settings', 'Settings', $has_full_access ? 'read' : 'crony_settings', 'crony-settings', 'crony_settings');
     add_submenu_page('crony', 'About', 'About', $has_full_access ? 'read' : $min_cap, 'crony-about', 'crony_about');
 }
@@ -144,12 +145,12 @@ function crony_settings ()
 }
 function crony_manage ()
 {
-    require_once CRONY_DIR.'/classes/Admin.class.php';
+    require_once CRONY_DIR.'/wp-admin-ui/Admin.class.php';
     $columns = array('name','disabled'=>array('Disabled?','type'=>'bool'),'start'=>array('label'=>'Start Running On','custom_input'=>'crony_start_input','type'=>'date'),'schedule'=>array('custom_display'=>'crony_schedule_display','custom_input'=>'crony_schedule_input'),'created'=>array('label'=>'Date Created','type'=>'date'),'updated'=>array('label'=>'Last Modified','type'=>'date'));
     $form_columns = $columns;
     $form_columns['script'] = array('label'=>'Script to Include','comments'=>'Path to Script or URL to Script (if server configuration supports it) for include','comments_top'=>true);
     $form_columns['function'] = array('label'=>'Function to Run');
-    $form_columns['phpcode'] = array('label'=>'Custom PHP to Run','type'=>'desc');
+    $form_columns['phpcode'] = array('label'=>'Custom PHP to Run','type'=>'desc','comments'=>'PHP Tag is already initiated, code away!','comments_top'=>true);
     $form_columns['created']['date_touch_on_create'] = true;
     $form_columns['created']['display'] = false;
     $form_columns['updated']['date_touch'] = true;
@@ -258,7 +259,6 @@ add_filter('cron_schedules','crony_schedules',10,2);
 if(is_admin()&&isset($_GET['page'])&&strpos($_GET['page'],'crony')!==false)
 {
     add_action('wp_admin_ui_post_save','crony_add_job',10,2);
-    add_action('wp_admin_ui_post_save','crony_edit_job',10,2);
     add_action('wp_admin_ui_post_delete','crony_remove_job',10,2);
 }
 function crony ($id)
@@ -298,23 +298,13 @@ function crony_add_job ($args,$obj)
         return false;
     if(!isset($args[3])||false===$args[3]||!isset($args[2])||empty($args[2]))
         return false;
+    crony_remove_job($args,$obj);
     if($args[2]['disabled']==1)
         return true;
     $timestamp = strtotime($args[2]['start']);
     $recurrence = $args[2]['schedule'];
     return wp_schedule_event($timestamp,$recurrence,'crony',array($args[1]));
     //wp_schedule_single_event($timestamp,'crony',array());
-}
-function crony_edit_job ($args,$obj)
-{
-    if($obj[0]->table!=CRONY_TBL.'jobs')
-        return false;
-    if(!isset($args[3])||false!==$args[3]||!isset($args[2])||empty($args[2]))
-        return false;
-    crony_remove_job($args,$obj);
-    if($args[2]['disabled']==1)
-        return true;
-    return crony_add_job($args,$obj);
 }
 function crony_remove_job ($args,$obj)
 {
@@ -328,10 +318,10 @@ function crony_remove_job ($args,$obj)
         if(isset($schedule['crony'])&&isset($schedule['crony'][$key]))
         {
             $timestamp = $ts;
-            break;
+            wp_unschedule_event($timestamp,'crony',array($args[1]));
         }
     }
     if(false===$timestamp)
         return false;
-    return wp_unschedule_event($timestamp,'crony',array($args[1]));
+    return true;
 }

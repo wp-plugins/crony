@@ -4,7 +4,7 @@ Donate link: http://www.scottkclark.com/
 Tags: cron, wp_cron, cronjob, cron job, automatic
 Requires at least: 2.9
 Tested up to: 3.0
-Stable tag: 0.1.1
+Stable tag: 0.1.2
 
 THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
@@ -16,19 +16,23 @@ THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs i
 
 Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
-All you do is install the plugin, schedule your Scripts / Functions / PHP code to run at a specific interval, and live your life!
+All you do is install the plugin, schedule your Scripts / Functions / PHP code to run at a specific interval, and live your life -- Cron it up!
 
 == Frequently Asked Questions ==
 
 **What does wp_cron() do?**
 
-As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() function scheduled ever 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background. The Cronjob (or Cron Job) sends a request to run cron through HTTP request that doesn't halt page loading for the visitor.
+As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() job scheduled ever 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background. The Cronjob (or Cron Job) sends a request to run cron through HTTP request that doesn't halt page loading for the visitor.
 
 **How is wp_cron() different from Server configured Cronjobs?**
 
-Cronjobs configured on a server run on their intervals automatically, while wp_cron() runs only after being triggered from a visitor to your site.
+Cronjobs configured on a server run on their intervals automatically, while wp_cron() jobs run only after being triggered from a visitor to your site.
 
 == Changelog ==
+
+= 0.1.2 =
+* Bug fix, the wp_cron jobs were not removed on save, scheduling over previous versions of the same job
+* Updated Admin.class.php with latest bug fixes / features
 
 = 0.1.1 =
 * Bug fix, the db table was created without an essential field
@@ -37,6 +41,10 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 0.1.2 =
+* Bug fix, the wp_cron jobs were not removed on save, scheduling over previous versions of the same job
+* Updated Admin.class.php with latest bug fixes / features
 
 = 0.1.1 =
 * Bug fix, the db table was created without an essential field, this version will fix that
