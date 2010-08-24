@@ -5,6 +5,12 @@ CREATE TABLE `wp_crony_jobs` (
   `disabled` int(1) NOT NULL,
   `start` datetime NOT NULL,
   `schedule` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `last_run` datetime NOT NULL,
+  `next_run` datetime NOT NULL,
+  `script` varchar(255) NOT NULL,
+  `function` varchar(255) NOT NULL,
+  `phpcode` longtext NOT NULL,
   `created` datetime NOT NULL,
   `updated` datetime NOT NULL,
   PRIMARY KEY (`id`)

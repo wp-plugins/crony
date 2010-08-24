@@ -3,14 +3,14 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://www.scottkclark.com/
 Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.1.2
+Version: 0.1.3
 Author: Scott Kingsley Clark
 Author URI: http://www.scottkclark.com/
 */
 
 global $wpdb;
 define('CRONY_TBL',$wpdb->prefix.'crony_');
-define('CRONY_VERSION','012');
+define('CRONY_VERSION','013');
 define('CRONY_URL',WP_PLUGIN_URL.'/crony');
 define('CRONY_DIR',WP_PLUGIN_DIR.'/crony');
 
@@ -35,6 +35,18 @@ function crony_init ()
         }
         delete_option('crony_version');
         add_option('crony_version',CRONY_VERSION);
+    }
+    elseif($version=='012')
+    {
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `email` varchar(255) AFTER `schedule`");
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `last_run` datetime AFTER `email`");
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `next_run` datetime AFTER `last_run`");
+        delete_option('crony_version');
+        add_option('crony_version',CRONY_VERSION);
+        // in case these fail (already exist) then on refresh it won't cause issues
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `script` varchar(255) AFTER `next_run`");
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `function` varchar(255) AFTER `script`");
+        $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `phpcode` longtext AFTER `function`");
     }
     elseif($version!=CRONY_VERSION)
     {
@@ -146,8 +158,12 @@ function crony_settings ()
 function crony_manage ()
 {
     require_once CRONY_DIR.'/wp-admin-ui/Admin.class.php';
-    $columns = array('name','disabled'=>array('Disabled?','type'=>'bool'),'start'=>array('label'=>'Start Running On','custom_input'=>'crony_start_input','type'=>'date'),'schedule'=>array('custom_display'=>'crony_schedule_display','custom_input'=>'crony_schedule_input'),'created'=>array('label'=>'Date Created','type'=>'date'),'updated'=>array('label'=>'Last Modified','type'=>'date'));
+    $columns = array('name','disabled'=>array('Disabled?','type'=>'bool'),'start'=>array(),'next_run'=>array('label'=>'Next Run On','custom_input'=>'crony_date_input','type'=>'date','comments'=>'This is the date to run the next Cronjob on','comments_top'=>true),'last_run'=>array('label'=>'Last Run On','type'=>'date'),'schedule'=>array('custom_display'=>'crony_schedule_display','custom_input'=>'crony_schedule_input'),'created'=>array('label'=>'Date Created','type'=>'date'),'updated'=>array('label'=>'Last Modified','type'=>'date'));
     $form_columns = $columns;
+    unset($columns['start']);
+    unset($form_columns['last_run']);
+    $form_columns['start'] = array('label'=>'Start On','custom_input'=>'crony_date_input','type'=>'date','comments'=>'This is the date to start allowing Cronjobs to run, set to the future to delay and override Next Run date','comments_top'=>true);
+    $form_columns['email'] = array('label'=>'E-mail Notifications','comments'=>'Enter the E-mail Address you would like notifications / output to be sent to','comments_top'=>true);
     $form_columns['script'] = array('label'=>'Script to Include','comments'=>'Path to Script or URL to Script (if server configuration supports it) for include','comments_top'=>true);
     $form_columns['function'] = array('label'=>'Function to Run');
     $form_columns['phpcode'] = array('label'=>'Custom PHP to Run','type'=>'desc','comments'=>'PHP Tag is already initiated, code away!','comments_top'=>true);
@@ -185,9 +201,11 @@ function crony_schedule_input ($column,$attributes,$obj)
 </select>
 <?php
 }
-function crony_start_input ($column,$attributes,$obj)
+function crony_date_input ($column,$attributes,$obj)
 {
     $obj->row[$column] = empty($obj->row[$column]) ? date("Y-m-d H:i:s") : $obj->row[$column];
+    if(isset($obj->date_input))
+        return;
 ?>
 <script type="text/javascript" src="<?php echo CRONY_URL; ?>/assets/date_input.js"></script>
 <link type="text/css" rel="stylesheet" href="<?php echo CRONY_URL; ?>/assets/date_input.css" />
@@ -198,6 +216,7 @@ jQuery(function() {
 </script>
 <input type="text" name="<?php echo $column; ?>" value="<?php echo $obj->row[$column]; ?>" class="regular-text date" />
 <?php
+    $obj->date_input = true;
 }
 function crony_about ()
 {
@@ -275,6 +294,12 @@ function crony ($id)
     if(0<strlen($row['phpcode']))
         eval($row['phpcode']);
     $return = ob_get_clean();
+    $schedules = wp_get_schedules();
+    $last_run = date('Y-m-d H:i:s');
+    $next_run = date('Y-m-d H:i:s',time()+$schedules[$row['schedule']]['interval']);
+    $wpdb->query("UPDATE ".CRONY_TBL."jobs SET `last_run` = '$last_run', `next_run` = '$next_run' WHERE `id`=".$wpdb->_real_escape($id));
+    if(!empty($row['email']))
+        wp_mail($row['email'],'['.get_bloginfo('sitename').'] Cronjob Run: '.$row['name'],'The following was output from the cronjob <strong>'.$row['name'].' that was run on '.date('m/d/Y h:m:sa').':<br /><br />'."\r\n\r\n".$return,"Content-Type: text/html");
     if(0<strlen($return))
         return $return;
     return true;
@@ -301,7 +326,7 @@ function crony_add_job ($args,$obj)
     crony_remove_job($args,$obj);
     if($args[2]['disabled']==1)
         return true;
-    $timestamp = strtotime($args[2]['start']);
+    $timestamp = strtotime($args[2]['next_run']);
     $recurrence = $args[2]['schedule'];
     return wp_schedule_event($timestamp,$recurrence,'crony',array($args[1]));
     //wp_schedule_single_event($timestamp,'crony',array());

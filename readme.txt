@@ -3,7 +3,7 @@ Contributors: sc0ttkclark
 Donate link: http://www.scottkclark.com/
 Tags: cron, wp_cron, cronjob, cron job, automatic
 Requires at least: 2.9
-Tested up to: 3.0
+Tested up to: 3.0.1
 Stable tag: 0.1.2
 
 THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
@@ -22,7 +22,7 @@ All you do is install the plugin, schedule your Scripts / Functions / PHP code t
 
 **What does wp_cron() do?**
 
-As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() job scheduled ever 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background. The Cronjob (or Cron Job) sends a request to run cron through HTTP request that doesn't halt page loading for the visitor.
+As you receive visitors on your site, WordPress checks your database to see if anything is scheduled to run. If you have a wp_cron() job scheduled every 12 hours, then the very first visitor 12+ hours from the last scheduled run of that function will trigger the function to run in the background. The Cronjob (or Cron Job) sends a request to run cron through HTTP request that doesn't halt page loading for the visitor.
 
 **How is wp_cron() different from Server configured Cronjobs?**
 
@@ -41,6 +41,11 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 0.1.3 =
+* Bug fix, the SQL was not installed correctly in 0.1.2
+* Added option for E-mail Notifications
+* Added Last Run tracking and Ability to set Next Run date
 
 = 0.1.2 =
 * Bug fix, the wp_cron jobs were not removed on save, scheduling over previous versions of the same job
