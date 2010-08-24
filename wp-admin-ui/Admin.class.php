@@ -1562,6 +1562,8 @@ table.widefat.fixed tbody.sortable tr { height:50px; }
             {
                 if($attributes['type']=='other')
                     $id = 'author';
+                if($attributes['type']=='date'||$attributes['type']=='datetime'||$attributes['type']=='time')
+                    $id = 'date';
             }
             if(false===$name_column&&$id=='title')
                 $name_column = true;

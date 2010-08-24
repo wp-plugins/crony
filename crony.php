@@ -3,14 +3,14 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://www.scottkclark.com/
 Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.1.3
+Version: 0.1.4
 Author: Scott Kingsley Clark
 Author URI: http://www.scottkclark.com/
 */
 
 global $wpdb;
 define('CRONY_TBL',$wpdb->prefix.'crony_');
-define('CRONY_VERSION','013');
+define('CRONY_VERSION','014');
 define('CRONY_URL',WP_PLUGIN_URL.'/crony');
 define('CRONY_DIR',WP_PLUGIN_DIR.'/crony');
 
@@ -36,7 +36,7 @@ function crony_init ()
         delete_option('crony_version');
         add_option('crony_version',CRONY_VERSION);
     }
-    elseif($version=='012')
+    elseif($version=='011'||$version=='012')
     {
         $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `email` varchar(255) AFTER `schedule`");
         $wpdb->query("ALTER TABLE ".CRONY_TBL."jobs ADD COLUMN `last_run` datetime AFTER `email`");

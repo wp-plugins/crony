@@ -4,7 +4,7 @@ Donate link: http://www.scottkclark.com/
 Tags: cron, wp_cron, cronjob, cron job, automatic
 Requires at least: 2.9
 Tested up to: 3.0.1
-Stable tag: 0.1.3
+Stable tag: 0.1.4
 
 THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
@@ -30,6 +30,14 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 
 == Changelog ==
 
+= 0.1.4 =
+* Bug fix, the column width was off in Firefox in Manage screens
+
+= 0.1.3 =
+* Bug fix, the SQL was not installed correctly in 0.1.2
+* Added option for E-mail Notifications
+* Added Last Run tracking and Ability to set Next Run date
+
 = 0.1.2 =
 * Bug fix, the wp_cron jobs were not removed on save, scheduling over previous versions of the same job
 * Updated Admin.class.php with latest bug fixes / features
@@ -41,6 +49,9 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 0.1.4 =
+* Bug fix, the column width was off in Firefox in Manage screens
 
 = 0.1.3 =
 * Bug fix, the SQL was not installed correctly in 0.1.2
