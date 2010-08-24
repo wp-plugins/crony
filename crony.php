@@ -204,8 +204,9 @@ function crony_schedule_input ($column,$attributes,$obj)
 function crony_date_input ($column,$attributes,$obj)
 {
     $obj->row[$column] = empty($obj->row[$column]) ? date("Y-m-d H:i:s") : $obj->row[$column];
-    if(isset($obj->date_input))
-        return;
+    if(!isset($obj->date_input))
+    {
+        $obj->date_input = true;
 ?>
 <script type="text/javascript" src="<?php echo CRONY_URL; ?>/assets/date_input.js"></script>
 <link type="text/css" rel="stylesheet" href="<?php echo CRONY_URL; ?>/assets/date_input.css" />
@@ -214,9 +215,9 @@ jQuery(function() {
     jQuery(".wp_admin_ui input.date").date_input();
 });
 </script>
+<?php } ?>
 <input type="text" name="<?php echo $column; ?>" value="<?php echo $obj->row[$column]; ?>" class="regular-text date" />
 <?php
-    $obj->date_input = true;
 }
 function crony_about ()
 {
@@ -299,7 +300,7 @@ function crony ($id)
     $next_run = date('Y-m-d H:i:s',time()+$schedules[$row['schedule']]['interval']);
     $wpdb->query("UPDATE ".CRONY_TBL."jobs SET `last_run` = '$last_run', `next_run` = '$next_run' WHERE `id`=".$wpdb->_real_escape($id));
     if(!empty($row['email']))
-        wp_mail($row['email'],'['.get_bloginfo('sitename').'] Cronjob Run: '.$row['name'],'The following was output from the cronjob <strong>'.$row['name'].' that was run on '.date('m/d/Y h:m:sa').':<br /><br />'."\r\n\r\n".$return,"Content-Type: text/html");
+        wp_mail($row['email'],'['.get_bloginfo('sitename').'] Cronjob Run: '.$row['name'],'The following was output (if any) from the cronjob <strong>'.$row['name'].'</strong> that was run on '.date('m/d/Y h:m:sa').'<br /><br />'."\r\n\r\n".$return,"Content-Type: text/html");
     if(0<strlen($return))
         return $return;
     return true;
