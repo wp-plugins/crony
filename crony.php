@@ -3,7 +3,7 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://www.scottkclark.com/
 Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.1.4
+Version: 0.1.5
 Author: Scott Kingsley Clark
 Author URI: http://www.scottkclark.com/
 */
@@ -82,7 +82,6 @@ function crony_menu ()
 {
     global $wpdb;
     $has_full_access = current_user_can('crony_full_access');
-        $has_full_access = true;
     if(!$has_full_access&&current_user_can('administrator'))
         $has_full_access = true;
     $min_cap = crony_current_user_can_which(crony_capabilities());
