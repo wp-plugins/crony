@@ -1,10 +1,10 @@
 === Crony Cronjob Manager ===
 Contributors: sc0ttkclark
-Donate link: http://www.scottkclark.com/
+Donate link: http://scottkclark.com/
 Tags: cron, wp_cron, cronjob, cron job, automatic
 Requires at least: 2.9
 Tested up to: 3.0.1
-Stable tag: 0.1.5
+Stable tag: 0.3.0
 
 THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
@@ -12,7 +12,7 @@ THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs i
 
 **THIS IS A BETA VERSION - Currently in development**
 
-**OFFICIAL SUPPORT** - Crony Cronjob Manager - Support Forums: http://www.scottkclark.com/forums/crony-cronjob-manager/
+**OFFICIAL SUPPORT** - Crony Cronjob Manager - Support Forums: http://scottkclark.com/forums/crony-cronjob-manager/
 
 Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
 
@@ -29,6 +29,15 @@ As you receive visitors on your site, WordPress checks your database to see if a
 Cronjobs configured on a server run on their intervals automatically, while wp_cron() jobs run only after being triggered from a visitor to your site.
 
 == Changelog ==
+
+= 0.3.0 =
+* Added Cronjob Activity Log
+* Added View / Remove Existing Cronjobs (external to Crony) and Available Cronjob Schedules
+* Various bug fixes
+* PHP must now be init with an opening PHP tag for Custom PHP (migrated existing Cronjob code for you)
+
+= 0.1.6 =
+* Bug fix, the dates saved didn't include times
 
 = 0.1.5 =
 * Bug fix, the menu access was incorrect
@@ -52,6 +61,15 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 0.3.0 =
+* Added Cronjob Activity Log
+* Added View / Remove Existing Cronjobs (external to Crony) and Available Cronjob Schedules
+* Bug fixes
+* PHP must now be init with an opening PHP tag for Custom PHP (migrated existing Cronjob code for you)
+
+= 0.1.6 =
+* Bug fix, the dates saved didn't include times
 
 = 0.1.5 =
 * Bug fix, the menu access was incorrect
@@ -85,7 +103,7 @@ OR you can just install it with WordPress by going to Plugins >> Add New >> and 
 
 == Official Support ==
 
-Crony Cronjob Manager - Support Forums: http://www.scottkclark.com/forums/crony-cronjob-manager/
+Crony Cronjob Manager - Support Forums: http://scottkclark.com/forums/crony-cronjob-manager/
 
 == About the Plugin Author ==
 
@@ -94,13 +112,13 @@ Scott Kingsley Clark from SKC Development -- Scott specializes in WordPress and 
 == Features ==
 
 = Administration =
-* Create and Manage Cronjobs
+* Create and Manage Custom Cronjobs
+* View Custom Cronjob Activity Log
+* View and Remove Existing Cronjobs
+* View Available Cronjob Schedules and Intervals
 * Admin.Class.php - A class for plugins to manage data using the WordPress UI appearance
-
-= API =
-* Add a job via the Crony API through other plugins
 
 == Roadmap ==
 
-= 0.2 =
+= 0.4 =
 * Test a Job by running the script via iframe
