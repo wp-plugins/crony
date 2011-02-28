@@ -2,8 +2,8 @@
 Contributors: sc0ttkclark
 Donate link: http://scottkclark.com/
 Tags: cron, wp_cron, cronjob, cron job, automatic
-Requires at least: 2.9
-Tested up to: 3.0.1
+Requires at least: 3.1
+Tested up to: 3.1
 Stable tag: 0.3.0
 
 THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
