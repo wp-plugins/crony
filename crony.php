@@ -3,7 +3,7 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://scottkclark.com/
 Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.3.0
+Version: 0.3.1
 Author: Scott Kingsley Clark
 Author URI: http://scottkclark.com/
 */
@@ -51,7 +51,11 @@ function crony_init ()
     {
         $wpdb->query($wpdb->prepare("UPDATE `".CRONY_TBL."jobs` SET `phpcode` = CONCAT(%s,`phpcode`) WHERE `phpcode` != ''","<?php\n"));
         $wpdb->query("DROP TABLE IF EXISTS `".CRONY_TBL."logs`");
-        $wpdb->query("CREATE TABLE `wp_crony_logs` (`id` int(10) NOT NULL AUTO_INCREMENT,`crony_id` int(10) NOT NULL,`output` longtext NOT NULL,`real` datetime NOT NULL,`start` datetime NOT NULL,`end` datetime NOT NULL,PRIMARY KEY (`id`)) DEFAULT CHARSET=utf8");
+        $wpdb->query("CREATE TABLE `wp_crony_logs` (`id` int(10) NOT NULL AUTO_INCREMENT,`crony_id` int(10) NOT NULL,`output` longtext NOT NULL,`real_time` datetime NOT NULL,`start` datetime NOT NULL,`end` datetime NOT NULL,PRIMARY KEY (`id`)) DEFAULT CHARSET=utf8");
+    }
+    if($version<31)
+    {
+        $wpdb->query("ALTER TABLE `wp_crony_logs` CHANGE `real` `real_time` datetime");
     }
     if($version!=CRONY_VERSION)
     {
@@ -384,7 +388,7 @@ function crony_view ()
 function crony_view_logs ()
 {
     require_once CRONY_DIR.'/wp-admin-ui/Admin.class.php';
-    $columns = array('crony_id'=>array('label'=>'Cronjob','custom_display'=>'crony_cronjob_name','custom_view'=>'crony_cronjob_name'),'real'=>array('label'=>'Scheduled Time','type'=>'datetime'),'start'=>array('label'=>'Start Time','type'=>'datetime'),'end'=>array('label'=>'End Time','type'=>'datetime'));
+    $columns = array('crony_id'=>array('label'=>'Cronjob','custom_display'=>'crony_cronjob_name','custom_view'=>'crony_cronjob_name'),'real_time'=>array('label'=>'Scheduled Time','type'=>'datetime'),'start'=>array('label'=>'Start Time','type'=>'datetime'),'end'=>array('label'=>'End Time','type'=>'datetime'));
     $view_columns = $columns;
     $view_columns['output'] = array('label'=>'Cronjob Output','custom_view'=>'crony_cronjob_output');
     $admin = new WP_Admin_UI(array('css'=>CRONY_URL.'/assets/admin.css','item'=>'Cronjob Log','items'=>'Cronjob Logs','table'=>CRONY_TBL.'logs','columns'=>$columns,'view_columns'=>$view_columns,'icon'=>CRONY_URL.'/assets/icons/32.png','readonly'=>true,'view'=>true));
@@ -547,7 +551,7 @@ function crony_remove_job ($args,$obj)
 function crony_add_log ($id,$output,$real,$start,$end)
 {
     global $wpdb;
-    return $wpdb->query($wpdb->prepare("INSERT INTO `".CRONY_TBL."logs` (`crony_id`,`output`,`real`,`start`,`end`) VALUES (%d, %s, %s, %s, %s)",array($id,$output,$real,$start,$end)));
+    return $wpdb->query($wpdb->prepare("INSERT INTO `".CRONY_TBL."logs` (`crony_id`,`output`,`real_time`,`start`,`end`) VALUES (%d, %s, %s, %s, %s)",array($id,$output,$real,$start,$end)));
 }
 function crony_empty_log ()
 {
