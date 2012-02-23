@@ -2,20 +2,28 @@
 /*
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://scottkclark.com/
-Description: Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
-Version: 0.3.1
+Description: Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
+Version: 0.4.0
 Author: Scott Kingsley Clark
 Author URI: http://scottkclark.com/
 */
 
 global $wpdb;
-define('CRONY_TBL',$wpdb->prefix.'crony_');
-define('CRONY_VERSION','030');
-define('CRONY_URL',WP_PLUGIN_URL.'/crony');
-define('CRONY_DIR',WP_PLUGIN_DIR.'/crony');
+define('CRONY_TBL', $wpdb->prefix . 'crony_');
+define('CRONY_VERSION', '040');
+define('CRONY_URL', WP_PLUGIN_URL . '/crony');
+define('CRONY_DIR', WP_PLUGIN_DIR . '/crony');
 
-add_action('admin_init','crony_init');
-add_action('admin_menu','crony_menu');
+add_action('admin_init', 'crony_init');
+add_action('admin_menu', 'crony_menu');
+
+add_action('crony', 'crony', 10, 1);
+add_filter('cron_schedules', 'crony_schedules', 10, 2);
+
+if (is_admin() && isset($_GET['page']) && strpos($_GET['page'], 'crony') !== false) {
+    add_action('wp_admin_ui_post_save', 'crony_add_job', 10, 2);
+    add_action('wp_admin_ui_post_delete', 'crony_remove_job', 10, 2);
+}
 
 function crony_init ()
 {
@@ -51,11 +59,15 @@ function crony_init ()
     {
         $wpdb->query($wpdb->prepare("UPDATE `".CRONY_TBL."jobs` SET `phpcode` = CONCAT(%s,`phpcode`) WHERE `phpcode` != ''","<?php\n"));
         $wpdb->query("DROP TABLE IF EXISTS `".CRONY_TBL."logs`");
-        $wpdb->query("CREATE TABLE `wp_crony_logs` (`id` int(10) NOT NULL AUTO_INCREMENT,`crony_id` int(10) NOT NULL,`output` longtext NOT NULL,`real_time` datetime NOT NULL,`start` datetime NOT NULL,`end` datetime NOT NULL,PRIMARY KEY (`id`)) DEFAULT CHARSET=utf8");
+        $wpdb->query("CREATE TABLE `".CRONY_TBL."logs` (`id` int(10) NOT NULL AUTO_INCREMENT,`crony_id` int(10) NOT NULL,`output` longtext NOT NULL,`real_time` datetime NOT NULL,`start` datetime NOT NULL,`end` datetime NOT NULL,PRIMARY KEY (`id`)) DEFAULT CHARSET=utf8");
     }
     if($version<31)
     {
-        $wpdb->query("ALTER TABLE `wp_crony_logs` CHANGE `real` `real_time` datetime");
+        $wpdb->query("ALTER TABLE `".CRONY_TBL."logs` CHANGE `real` `real_time` datetime");
+    }
+    if($version<40)
+    {
+        $wpdb->query("ALTER TABLE `".CRONY_TBL."jobs` ADD COLUMN `url` varchar(255) AFTER `next_run`");
     }
     if($version!=CRONY_VERSION)
     {
@@ -100,7 +112,7 @@ function crony_menu ()
     add_submenu_page('crony', 'Manage Cronjobs', 'Manage Cronjobs', $has_full_access ? 'read' : 'crony_manage', 'crony', 'crony_manage');
     add_submenu_page('crony', 'View Schedule', 'View Schedule', $has_full_access ? 'read' : 'crony_view', 'crony-view', 'crony_view');
     add_submenu_page('crony', 'View Logs', 'View Logs', $has_full_access ? 'read' : 'crony_view_logs', 'crony-logs', 'crony_view_logs');
-    //add_submenu_page('crony', 'Settings', 'Settings', $has_full_access ? 'read' : 'crony_settings', 'crony-settings', 'crony_settings');
+    add_submenu_page('crony', 'Settings', 'Settings', $has_full_access ? 'read' : 'crony_settings', 'crony-settings', 'crony_settings');
     add_submenu_page('crony', 'About', 'About', $has_full_access ? 'read' : $min_cap, 'crony-about', 'crony_about');
 }
 function crony_get_capabilities ($caps)
@@ -134,6 +146,18 @@ function crony_current_user_can_which ($caps)
 
 function crony_settings ()
 {
+    if (isset($_POST['clear-logs']) && !empty($_POST['clear-logs'])) {
+        crony_empty_log();
+?>
+        <div id="message" class="updated fade"><p>Crony Logs have been removed</p></div>
+<?php
+    }
+    elseif (isset($_POST['reset']) && !empty($_POST['reset'])) {
+        crony_reset();
+?>
+        <div id="message" class="updated fade"><p>All Crony Jobs, Logs, and Settings have been removed</p></div>
+<?php
+    }
 ?>
 <div class="wrap">
     <div id="icon-edit-pages" class="icon32" style="background-position:0 0;background-image:url(<?php echo CRONY_URL; ?>/assets/icons/32.png);"><br /></div>
@@ -146,14 +170,14 @@ function crony_settings ()
                 <th scope="row"><label>Reset Crony Logs</label></th>
                 <td>
                     <input name="clear-logs" type="submit" id="clear" value=" Clear Now " onclick="return confirm('Are you sure?');" />
-                    <span class="description">This will remove all Cronjob logs from Crony</span>
+                    <span class="description">This will remove all Crony Logs</span>
                 </td>
             </tr>
             <tr valign="top">
                 <th scope="row"><label>Reset Crony</label></th>
                 <td>
                     <input name="reset" type="submit" id="reset" value=" Reset Now " onclick="return confirm('Are you sure?');" />
-                    <span class="description">This will remove all cronjobs from Crony</span>
+                    <span class="description">This will remove all Crony Jobs, Logs, and Settings</span>
                 </td>
             </tr><!--
             <tr valign="top">
@@ -180,9 +204,10 @@ function crony_manage ()
     unset($form_columns['last_run']);
     $form_columns['start'] = array('label'=>'Start On','custom_input'=>'crony_date_input','type'=>'datetime','comments'=>'This is the date to start allowing Cronjobs to run, set to the future to delay and override Next Run date','comments_top'=>true);
     $form_columns['email'] = array('label'=>'E-mail Notifications','comments'=>'Enter the E-mail Address you would like notifications / output to be sent to','comments_top'=>true);
-    $form_columns['script'] = array('label'=>'Script to Include','comments'=>'Path to Script or URL to Script (if server configuration supports it) for include','comments_top'=>true);
+    $form_columns['url'] = array('label'=>'URL to Load','comments'=>'URL of a Page or Script to be loaded','comments_top'=>true);
+    $form_columns['script'] = array('label'=>'Script to Include','comments'=>'Path of Script to be included','comments_top'=>true);
     $form_columns['function'] = array('label'=>'Function to Run');
-    $form_columns['phpcode'] = array('label'=>'Custom PHP to Run','type'=>'desc','comments'=>'<strong>NOTE:</strong> You must put your &gt;?php tag to initiate PHP where you want it used','comments_top'=>true);
+    $form_columns['phpcode'] = array('label'=>'Custom PHP to Run','type'=>'desc','comments'=>'<strong>NOTE:</strong> You must put your &lt;?php tag to initiate PHP where you want it used','comments_top'=>true);
     $form_columns['created']['date_touch_on_create'] = true;
     $form_columns['created']['display'] = false;
     $form_columns['updated']['date_touch'] = true;
@@ -314,10 +339,16 @@ function crony_view ()
             <tr>
                 <th scope="row"><?php echo $function; ?></th>
                 <td><?php echo ($event['schedule']?$schedules[$event['schedule']]['display']:'<em>One-off event</em>'); ?></td>
-                <td><?php echo date_i18n('M j, Y @ h:ia',$timestamp); ?></td>
+                <td><?php echo get_date_from_gmt(date_i18n('Y-m-d H:i:s', $timestamp, true), 'M j, Y @ h:ia'); ?></td>
                 <td>
 <?php
-                if(!empty($event['args']))
+                if ('crony' == $function && !empty($event['args'])) {
+                    $crony_id = (int) $event['args'][0];
+?>
+                    <a href="admin.php?page=crony&action=edit&id=<?php echo $crony_id; ?>"><?php echo crony_get_job_name($crony_id); ?></a>
+<?php
+                }
+                elseif(!empty($event['args']))
                 {
 ?>
                     <ul>
@@ -465,96 +496,133 @@ function crony_about ()
 <?php
 }
 
-add_action('crony','crony',10,1);
-add_filter('cron_schedules','crony_schedules',10,2);
-if(is_admin()&&isset($_GET['page'])&&strpos($_GET['page'],'crony')!==false)
-{
-    add_action('wp_admin_ui_post_save','crony_add_job',10,2);
-    add_action('wp_admin_ui_post_delete','crony_remove_job',10,2);
-}
-function crony ($id)
-{
+function crony_get_job_name ($id) {
     global $wpdb;
-    $start = current_time('mysql');
-    $row = @current($wpdb->get_results('SELECT * FROM `'.CRONY_TBL.'jobs` WHERE `disabled`=0 AND `id`='.$wpdb->_real_escape($id),ARRAY_A));
-    if(false===$row)
+    $row = @current($wpdb->get_results('SELECT `name` FROM `' . CRONY_TBL . 'jobs` WHERE `id`=' . $wpdb->_real_escape($id), ARRAY_A));
+    if (false === $row)
+        return '<em>Job not found</em>';
+    return $row['name'];
+}
+function crony ($id) {
+    global $wpdb;
+    $row = @current($wpdb->get_results('SELECT * FROM `' . CRONY_TBL . 'jobs` WHERE `disabled`=0 AND `id`=' . $wpdb->_real_escape($id), ARRAY_A));
+    if (false === $row)
         return false;
+    $start = current_time('mysql');
     $real = $row['next_run'];
     ob_start();
-    if(0<strlen($row['script']))
+    if (0 < strlen($row['url']) && false !== @parse_url($row['url']))
+        wp_remote_post($row['url'], array('sslverify' => apply_filters('https_local_ssl_verify', true)));
+    if (0 < strlen($row['script']))
         include_once $row['script'];
-    if(0<strlen($row['function'])&&function_exists("{$row['function']}"))
+    if (0 < strlen($row['function']) && function_exists("{$row['function']}"))
         $row['function']();
-    if(0<strlen($row['phpcode']))
-    {
-        eval('?>'.$row['phpcode']);
+    if (0 < strlen($row['phpcode'])) {
+        eval('?>' . $row['phpcode']);
     }
     $output = ob_get_clean();
     $schedules = wp_get_schedules();
     $last_run = date_i18n('Y-m-d H:i:s');
-    $next_run = date_i18n('Y-m-d H:i:s',current_time('timestamp')+$schedules[$row['schedule']]['interval']);
-    $wpdb->query("UPDATE `".CRONY_TBL."jobs` SET `last_run` = '$last_run', `next_run` = '$next_run' WHERE `id`=".$wpdb->_real_escape($id));
-    if(!empty($row['email']))
-        wp_mail($row['email'],'['.get_bloginfo('sitename').'] Cronjob Run: '.$row['name'],'The following was output (if any) from the cronjob <strong>'.$row['name'].'</strong> that was run on '.date_i18n('m/d/Y h:m:sa').'<br /><br />'."\r\n\r\n".$output,"Content-Type: text/html");
+    $next_run = date_i18n('Y-m-d H:i:s', current_time('timestamp') + $schedules[$row['schedule']]['interval']);
+    $wpdb->query("UPDATE `" . CRONY_TBL . "jobs` SET `last_run` = '$last_run', `next_run` = '$next_run' WHERE `id`=" . $wpdb->_real_escape($id));
+    if (!empty($row['email']))
+        wp_mail($row['email'], '[' . get_bloginfo('sitename') . '] Cronjob Run: ' . $row['name'], 'The following was output (if any) from the cronjob <strong>' . $row['name'] . '</strong> that was run on ' . date_i18n('m/d/Y h:i:sa') . '<br /><br />' . "\r\n\r\n" . $output, "Content-Type: text/html");
     $end = current_time('mysql');
-    crony_add_log($id,$output,$real,$start,$end);
-    if(0<strlen($output))
+    crony_add_log($id, $output, $real, $start, $end);
+    if (0 < strlen($output))
         return $output;
     return true;
 }
-function crony_schedules ($schedules)
-{
-    $schedules['twicehourly'] = array( 'interval' => 1800, 'display' => __('Twice Hourly') );
-    $schedules['weekly'] = array( 'interval' => 604800, 'display' => __('Once Weekly') );
-    $schedules['twiceweekly'] = array( 'interval' => 302400, 'display' => __('Twice Weekly') );
-    $schedules['monthly'] = array( 'interval' => 2628002, 'display' => __('Once Monthly') );
-    $schedules['twicemonthly'] = array( 'interval' => 1314001, 'display' => __('Twice Monthly') );
-    $schedules['yearly'] = array( 'interval' => 31536000, 'display' => __('Once Yearly') );
-    $schedules['twiceyearly'] = array( 'interval' => 15768012, 'display' => __('Twice Yearly') );
-    $schedules['fouryearly'] = array( 'interval' => 7884006, 'display' => __('Four Times Yearly') );
-    $schedules['sixyearly'] = array( 'interval' => 5256004, 'display' => __('Six Times Yearly') );
+function crony_schedules ($schedules) {
+    if (!isset($schedules['twicehourly']))
+        $schedules['twicehourly'] = array( 'interval' => 1800, 'display' => __('Twice Hourly') );
+    if (!isset($schedules['weekly']))
+        $schedules['weekly'] = array( 'interval' => 604800, 'display' => __('Once Weekly') );
+    if (!isset($schedules['twiceweekly']))
+        $schedules['twiceweekly'] = array( 'interval' => 302400, 'display' => __('Twice Weekly') );
+    if (!isset($schedules['monthly']))
+        $schedules['monthly'] = array( 'interval' => 2628002, 'display' => __('Once Monthly') );
+    if (!isset($schedules['twicemonthly']))
+        $schedules['twicemonthly'] = array( 'interval' => 1314001, 'display' => __('Twice Monthly') );
+    if (!isset($schedules['yearly']))
+        $schedules['yearly'] = array( 'interval' => 31536000, 'display' => __('Once Yearly') );
+    if (!isset($schedules['twiceyearly']))
+        $schedules['twiceyearly'] = array( 'interval' => 15768012, 'display' => __('Twice Yearly') );
+    if (!isset($schedules['fouryearly']))
+        $schedules['fouryearly'] = array( 'interval' => 7884006, 'display' => __('Four Times Yearly') );
+    if (!isset($schedules['sixyearly']))
+        $schedules['sixyearly'] = array( 'interval' => 5256004, 'display' => __('Six Times Yearly') );
     return apply_filters('crony_schedules',$schedules);
 }
-function crony_add_job ($args,$obj)
-{
-    if($obj[0]->table!=CRONY_TBL.'jobs')
+
+function crony_add_job ($args, $obj) {
+    if ($obj[0]->table != CRONY_TBL . 'jobs')
         return false;
-    if(!isset($args[3])||false===$args[3]||!isset($args[2])||empty($args[2]))
+    if (!isset($args[3]) || false === $args[3] || !isset($args[2]) || empty($args[2]))
         return false;
-    crony_remove_job($args,$obj);
-    if($args[2]['disabled']==1)
+    crony_remove_job($args, $obj);
+    if ($args[2]['disabled'] == 1)
         return true;
-    $timestamp = strtotime($args[2]['next_run']);
+    $timestamp = mysql2date('U', get_gmt_from_date($args[2]['next_run']));
     $recurrence = $args[2]['schedule'];
-    return wp_schedule_event($timestamp,$recurrence,'crony',array($args[1]));
-    //wp_schedule_single_event($timestamp,'crony',array());
+    return wp_schedule_event($timestamp, $recurrence, 'crony', array($args[1]));
 }
-function crony_remove_job ($args,$obj)
-{
-    if($obj[0]->table!=CRONY_TBL.'jobs')
+
+function crony_remove_job ($args, $obj) {
+    if ($obj[0]->table != CRONY_TBL . 'jobs')
         return false;
-    $schedules = _get_cron_array();
+
     $timestamp = false;
-	$key = md5(serialize(array($args[1])));
-    foreach($schedules as $ts=>$schedule)
+    $key = md5(serialize(array($args[1])));
+
+    $schedules = _get_cron_array();
+    foreach ($schedules as $ts => $schedule)
     {
-        if(isset($schedule['crony'])&&isset($schedule['crony'][$key]))
-        {
+        if (isset($schedule['crony']) && isset($schedule['crony'][$key])) {
             $timestamp = $ts;
-            wp_unschedule_event($timestamp,'crony',array($args[1]));
+            wp_unschedule_event($timestamp, 'crony', array($args[1]));
         }
     }
-    if(false===$timestamp)
+
+    if (false === $timestamp)
         return false;
     return true;
 }
-function crony_add_log ($id,$output,$real,$start,$end)
-{
+
+function crony_add_log ($id, $output, $real, $start, $end) {
     global $wpdb;
-    return $wpdb->query($wpdb->prepare("INSERT INTO `".CRONY_TBL."logs` (`crony_id`,`output`,`real_time`,`start`,`end`) VALUES (%d, %s, %s, %s, %s)",array($id,$output,$real,$start,$end)));
+    return $wpdb->query($wpdb->prepare("INSERT INTO `" . CRONY_TBL . "logs` (`crony_id`, `output`, `real_time`, `start`, `end`) VALUES (%d, %s, %s, %s, %s)", array($id, $end)));
 }
-function crony_empty_log ()
-{
+
+function crony_empty_log () {
     global $wpdb;
-    return $wpdb->query("TRUNCATE `".CRONY_TBL."logs`");
+    return $wpdb->query("TRUNCATE `" . CRONY_TBL . "logs`");
+}
+
+function crony_reset () {
+    global $wpdb;
+
+    // Get current crons
+    $schedules = _get_cron_array();
+
+    // Remove Existing Jobs
+    $jobs = $wpdb->get_col('SELECT `id` FROM `' . CRONY_TBL . 'jobs`');
+    foreach ($jobs as $job) {
+        $timestamp = false;
+        $key = md5(serialize(array($job)));
+        foreach ($schedules as $ts => $schedule)
+        {
+            if (isset($schedule['crony']) && isset($schedule['crony'][$key])) {
+                $timestamp = $ts;
+                wp_unschedule_event($timestamp, 'crony', array($job));
+            }
+        }
+    }
+
+    // Reset Data
+    $tables = array('jobs',
+                    'logs');
+    foreach ($tables as $table) {
+        $wpdb->query("TRUNCATE `" . CRONY_TBL . $table . "`");
+    }
 }

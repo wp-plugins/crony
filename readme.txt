@@ -1,12 +1,12 @@
 === Crony Cronjob Manager ===
 Contributors: sc0ttkclark
 Donate link: http://scottkclark.com/
-Tags: cron, wp_cron, cronjob, cron job, automatic
+Tags: cron, wp_cron, cronjob, cron job, automatic, scheduler
 Requires at least: 3.0
-Tested up to: 3.1
-Stable tag: 0.3.1
+Tested up to: 3.3.1
+Stable tag: 0.4.0
 
-THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
+THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
 
 == Description ==
 
@@ -14,7 +14,7 @@ THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs i
 
 **OFFICIAL SUPPORT** - Crony Cronjob Manager - Support Forums: http://scottkclark.com/forums/crony-cronjob-manager/
 
-Create and Manage Cronjobs in WP by running Scripts, Functions, and/or PHP code. This plugin utilizes the wp_cron API.
+Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
 
 All you do is install the plugin, schedule your Scripts / Functions / PHP code to run at a specific interval, and live your life -- Cron it up!
 
@@ -29,6 +29,12 @@ As you receive visitors on your site, WordPress checks your database to see if a
 Cronjobs configured on a server run on their intervals automatically, while wp_cron() jobs run only after being triggered from a visitor to your site.
 
 == Changelog ==
+
+= 0.4.0 =
+* Added Settings area to reset Crony, or empty Crony Logs
+* Added URL to load a script / page from, uses wp_remote_post, where the script include only uses include_once
+* Bug fixes for WP Admin UI
+* Bug fix for schedule running, previously was assuming current timezone for everything but WP runs cron under GMT timestamps
 
 = 0.3.1 =
 * Bug fix for dates in Log
@@ -64,6 +70,12 @@ Cronjobs configured on a server run on their intervals automatically, while wp_c
 * First official release to the public as a plugin
 
 == Upgrade Notice ==
+
+= 0.4.0 =
+* Added Settings area to reset Crony, or empty Crony Logs
+* Added URL to load a script / page from, uses wp_remote_post, where the script include only uses include_once
+* Bug fixes for WP Admin UI
+* Bug fix for schedule running, previously was assuming current timezone for everything but WP runs cron under GMT timestamps
 
 = 0.3.1 =
 * Bug fix for dates in Log
@@ -122,9 +134,10 @@ Scott Kingsley Clark from SKC Development -- Scott specializes in WordPress and 
 * View Custom Cronjob Activity Log
 * View and Remove Existing Cronjobs
 * View Available Cronjob Schedules and Intervals
+* Reset Logs or all Crony settings
 * Admin.Class.php - A class for plugins to manage data using the WordPress UI appearance
 
 == Roadmap ==
 
-= 0.4 =
+= 0.5.0 =
 * Test a Job by running the script via iframe
