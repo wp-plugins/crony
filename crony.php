@@ -3,14 +3,14 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://scottkclark.com/
 Description: Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
-Version: 0.4.0
+Version: 0.4.1
 Author: Scott Kingsley Clark
 Author URI: http://scottkclark.com/
 */
 
 global $wpdb;
 define('CRONY_TBL', $wpdb->prefix . 'crony_');
-define('CRONY_VERSION', '040');
+define('CRONY_VERSION', '041');
 define('CRONY_URL', WP_PLUGIN_URL . '/crony');
 define('CRONY_DIR', WP_PLUGIN_DIR . '/crony');
 
@@ -102,12 +102,17 @@ function crony_init ()
 function crony_menu ()
 {
     global $wpdb;
+
     $has_full_access = current_user_can('crony_full_access');
+
     if(!$has_full_access&&(current_user_can('administrator')||is_super_admin()))
         $has_full_access = true;
+
     $min_cap = crony_current_user_can_which(crony_capabilities());
+
     if(empty($min_cap))
         $min_cap = 'crony_full_access';
+
     add_menu_page('Cronjobs', 'Cronjobs', $has_full_access ? 'read' : $min_cap, 'crony', null, CRONY_URL.'/assets/icons/16.png');
     add_submenu_page('crony', 'Manage Cronjobs', 'Manage Cronjobs', $has_full_access ? 'read' : 'crony_manage', 'crony', 'crony_manage');
     add_submenu_page('crony', 'View Schedule', 'View Schedule', $has_full_access ? 'read' : 'crony_view', 'crony-view', 'crony_view');
@@ -449,12 +454,8 @@ function crony_about ()
     <table class="form-table about">
         <tr valign="top">
             <th scope="row">About the Plugin Author</th>
-            <td><a href="http://scottkclark.com/">Scott Kingsley Clark</a> from <a href="http://skcdev.com/">SKC Development</a>
-                <span class="description">Scott specializes in WordPress and Pods CMS Framework development using PHP, MySQL, and AJAX. Scott is also a developer on the <a href="http://podscms.org/">Pods CMS Framework</a> plugin and has a creative outlet in music with his <a href="http://softcharisma.com/">Soft Charisma</a></span></td>
-        </tr>
-        <tr valign="top">
-            <th scope="row">Official Support</th>
-            <td><a href="http://scottkclark.com/forums/crony-cronjob-manager/">Crony Cronjob Manager - Support Forums</a></td>
+            <td><a href="http://scottkclark.com/">Scott Kingsley Clark</a>
+                <span class="description">Scott specializes in WordPress and Pods CMS Framework development using PHP, MySQL, and AJAX. Scott is also the lead developer of the <a href="http://podsframework.org/">Pods Framework</a> plugin and has a creative outlet in music with his <a href="http://softcharisma.com/">Soft Charisma</a></span></td>
         </tr>
         <tr valign="top">
             <th scope="row">Features</th>
@@ -468,28 +469,10 @@ function crony_about ()
                             <li>View Available Cronjob Schedules and Intervals</li>
                             <li>Admin.Class.php - A class for plugins to manage data using the WordPress UI appearance</li>
                         </ul>
-                    </li><!--
-                    <li><strong>API</strong>
-                        <ul>
-                            <li>Add a job via the Crony API through other plugins</li>
-                        </ul>
-                    </li>-->
+                    </li>
                 </ul>
             </td>
-        </tr><!--
-        <tr valign="top">
-            <th scope="row">Upcoming Features - Roadmap</th>
-            <td>
-                <dl>
-                    <dt>0.2</dt>
-                    <dd>
-                        <ul>
-                            <li>Still deciding</li>
-                        </ul>
-                    </dd>
-                </dl>
-            </td>
-        </tr>-->
+        </tr>
     </table>
     <div style="height:50px;"></div>
 </div>
@@ -591,6 +574,10 @@ function crony_remove_job ($args, $obj) {
 
 function crony_add_log ($id, $output, $real, $start, $end) {
     global $wpdb;
+
+    // Drop any older logs
+    $wpdb->query( "DELETE FROM `" . CRONY_TBL . "logs` WHERE `crony_id` IN ( SELECT `crony_id` FROM `" . CRONY_TBL . "logs` ORDER BY `crony_id` LIMIT 80, 1000 )" );
+
     return $wpdb->query($wpdb->prepare("INSERT INTO `" . CRONY_TBL . "logs` (`crony_id`, `output`, `real_time`, `start`, `end`) VALUES (%d, %s, %s, %s, %s)", array($id, $end)));
 }
 
