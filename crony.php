@@ -3,14 +3,14 @@
 Plugin Name: Crony Cronjob Manager
 Plugin URI: http://scottkclark.com/
 Description: Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
-Version: 0.4.1
+Version: 0.4.2
 Author: Scott Kingsley Clark
 Author URI: http://scottkclark.com/
 */
 
 global $wpdb;
 define('CRONY_TBL', $wpdb->prefix . 'crony_');
-define('CRONY_VERSION', '041');
+define('CRONY_VERSION', '042');
 define('CRONY_URL', WP_PLUGIN_URL . '/crony');
 define('CRONY_DIR', WP_PLUGIN_DIR . '/crony');
 
@@ -576,9 +576,9 @@ function crony_add_log ($id, $output, $real, $start, $end) {
     global $wpdb;
 
     // Drop any older logs
-    $wpdb->query( "DELETE FROM `" . CRONY_TBL . "logs` WHERE `crony_id` IN ( SELECT `crony_id` FROM `" . CRONY_TBL . "logs` ORDER BY `crony_id` LIMIT 80, 1000 )" );
+    $wpdb->query( $wpdb->prepare( "DELETE FROM `" . CRONY_TBL . "logs` WHERE `end` < %s", array( date_i18n( 'Y-m-d H:i:s', strtotime( '-2 weeks' ) ) ) ) );
 
-    return $wpdb->query($wpdb->prepare("INSERT INTO `" . CRONY_TBL . "logs` (`crony_id`, `output`, `real_time`, `start`, `end`) VALUES (%d, %s, %s, %s, %s)", array($id, $end)));
+    return $wpdb->query($wpdb->prepare("INSERT INTO `" . CRONY_TBL . "logs` (`crony_id`, `output`, `real_time`, `start`, `end`) VALUES (%d, %s, %s, %s, %s)", array($id, $output, $real, $start, $end)));
 }
 
 function crony_empty_log () {
