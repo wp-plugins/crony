@@ -6,11 +6,9 @@ Requires at least: 3.0
 Tested up to: 4.1.1
 Stable tag: 0.4.5
 
-THIS IS A BETA VERSION - Currently in development - Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
+Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
 
 == Description ==
-
-**THIS IS A BETA VERSION - Currently in development**
 
 Create and Manage Cronjobs in WP by loading Scripts via URLs, including Scripts, running Functions, and/or running PHP code. This plugin utilizes the wp_cron API.
 
